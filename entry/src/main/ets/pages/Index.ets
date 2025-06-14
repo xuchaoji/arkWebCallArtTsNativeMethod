@@ -9,11 +9,21 @@ interface GeneratedObjectLiteralInterface_1 {
 
 const TAG: string = 'MyDemoIndex'
 
+const JS_NAME: string = 'JSBridgeName';
+
 @Entry
 @ComponentV2
 struct Index {
   controller: webview.WebviewController = new webview.WebviewController();
   jsBridge: JSBridge = new JSBridge();
+
+  aboutToDisappear(): void {
+    try {
+      this.controller.deleteJavaScriptRegister(JS_NAME);
+    } catch (e) {
+      console.error(TAG, `delete js register error`)
+    }
+  }
 
   build() {
     Column() {
@@ -25,7 +35,7 @@ struct Index {
         .onControllerAttached(() => {
           this.controller.registerJavaScriptProxy(
             this.jsBridge,
-            "JSBridgeName", // H5页面调用时使用 具体见：jsPage.html中的callJSBridge()
+            JS_NAME, // H5页面调用时使用 具体见：jsPage.html中的callJSBridge()
             ['onMessage', 'showToast', 'showDialog', 'getDeviceInfo', 'goBack'] // 支持的方法列表
           );
           this.controller.refresh();
@@ -52,7 +62,6 @@ struct Index {
 
 // 可扩展的JSBridge类
 class JSBridge {
-
   // 通用消息处理器
   onMessage(message: string) {
     console.log(TAG, `收到H5消息: ${message}`);
@@ -65,7 +74,6 @@ class JSBridge {
       return '消息格式错误';
     }
   }
-
 
   // 显示Toast
   showToast(message: string) {
