@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArkTS与WebView交互示例</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(79, 172, 254, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(79, 172, 254, 0.4);
+        }
+
+        .content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(20, 30, 48, 0.85);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #4facfe;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 i {
+            font-size: 1.5rem;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .code-block code {
+            color: #f8f8f2;
+            display: block;
+            white-space: pre;
+        }
+
+        .function-list {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .function-list li {
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .function-list li:hover {
+            background: rgba(79, 172, 254, 0.2);
+            transform: translateX(5px);
+        }
+
+        .function-list li i {
+            margin-right: 10px;
+            color: #4facfe;
+            font-size: 1.2rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #4facfe;
+        }
+
+        input, select, textarea {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: none;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(90deg, #ff8a00, #e52e71);
+        }
+
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .result-area h3 {
+            margin-bottom: 10px;
+            color: #4facfe;
+        }
+
+        .logs {
+            font-family: 'Consolas', 'Courier New', monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .success {
+            color: #50fa7b;
+        }
+
+        .error {
+            color: #ff5555;
+        }
+
+        .info {
+            color: #8be9fd;
+        }
+
+        .highlight {
+            color: #ff79c6;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>ArkTS与WebView交互示例</h1>
+        <p class="subtitle">本示例展示了如何在鸿蒙应用中使用ArkTS与WebView通过JS接口进行通信。ArkTS封装了可扩展的JS接口，H5页面可以通过这些接口与原生应用交互。</p>
+
+        <div class="tabs">
+            <div class="tab" data-tab="arkts">ArkTS代码</div>
+            <div class="tab" data-tab="h5">H5调试页面</div>
+            <div class="tab active" data-tab="demo">交互演示</div>
+        </div>
+    </header>
+
+    <!-- ArkTS代码部分 -->
+    <div class="card hidden" id="arkts-section">
+        <h2><i class="fas fa-code"></i> ArkTS页面实现</h2>
+        <p>以下是完整的ArkTS页面代码，展示了如何封装可扩展的JS接口：</p>
+
+        <div class="code-block">
+            <code>// WebViewPage.ets
+                import webview from '@ohos.web.webview';
+                import prompt from '@ohos.prompt';
+                import router from '@ohos.router';
+
+                @Entry
+                @Component
+                struct WebViewPage {
+                controller: webview.WebviewController = new webview.WebviewController();
+                jsBridge: JSBridge = new JSBridge();
+
+                aboutToAppear() {
+                // 注册默认接口
+                this.jsBridge.registerHandler('showToast', this.showToast.bind(this));
+                this.jsBridge.registerHandler('showDialog', this.showDialog.bind(this));
+                this.jsBridge.registerHandler('getDeviceInfo', this.getDeviceInfo.bind(this));
+                this.jsBridge.registerHandler('goBack', this.goBack.bind(this));
+
+                // 添加JSBridge到WebView
+                this.controller.addJavaScriptProxy({
+                object: this.jsBridge,
+                name: 'JSBridge',
+                methodList: ['onMessage', 'callHandler']
+                });
+                }
+
+                // 显示Toast
+                showToast(message: string) {
+                prompt.showToast({ message: message, duration: 2000 });
+                return `Toast显示: ${message}`;
+                }
+
+                // 显示对话框
+                showDialog(title: string, message: string) {
+                prompt.showDialog({
+                title: title,
+                message: message,
+                buttons: [{ text: '确定' }, { text: '取消' }]
+                });
+                return `对话框显示: ${title} - ${message}`;
+                }
+
+                // 获取设备信息
+                getDeviceInfo() {
+                const deviceInfo = {
+                model: device.deviceModel,
+                osVersion: device.osFullName,
+                screen: `${window.getWindowWidth()}x${window.getWindowHeight()}`,
+                language: i18n.getSystemLanguage()
+                };
+                return JSON.stringify(deviceInfo);
+                }
+
+                // 返回上一页
+                goBack() {
+                router.back();
+                return '返回操作执行';
+                }
+
+                // 调用H5方法
+                callH5Method() {
+                this.controller.runJavaScript("receiveFromNative('Hello from ArkTS!')");
+                }
+
+                build() {
+                Column() {
+                // WebView组件
+                Web({
+                src: $rawfile('index.html'),
+                controller: this.controller
+                })
+                .onPageEnd(e => {
+                console.log('页面加载完成');
+                })
+                .javaScriptAccess(true)
+                .fileAccess(true)
+                .domStorageAccess(true)
+                .width('100%')
+                .height('100%')
+                }
+                .width('100%')
+                .height('100%')
+                .padding(12)
+                }
+                }
+
+                // 可扩展的JSBridge类
+                class JSBridge {
+                private handlers: Map&lt;string, Function> = new Map();
+
+                // 注册处理器
+                registerHandler(handlerName: string, handler: Function) {
+                this.handlers.set(handlerName, handler);
+                }
+
+                // 调用处理器
+                callHandler(handlerName: string, ...args: any[]): any {
+                const handler = this.handlers.get(handlerName);
+                if (handler) {
+                return handler(...args);
+                }
+                console.error(`未找到处理器: ${handlerName}`);
+                return null;
+                }
+
+                // 通用消息处理器
+                onMessage(message: string) {
+                console.log(`收到H5消息: ${message}`);
+                try {
+                const msg = JSON.parse(message);
+                // 处理自定义消息
+                return '消息已接收';
+                } catch (e) {
+                console.error('消息解析错误:', e);
+                return '消息格式错误';
+                }
+                }
+                }</code>
+        </div>
+
+        <h3>设计说明：</h3>
+        <ul class="function-list">
+            <li><i class="fas fa-cogs"></i> <span class="highlight">可扩展架构</span> - 通过registerHandler方法可动态添加功能</li>
+            <li><i class="fas fa-exchange-alt"></i> <span class="highlight">双向通信</span> - 支持ArkTS调用H5和H5调用ArkTS</li>
+            <li><i class="fas fa-shield-alt"></i> <span class="highlight">安全封装</span> - 使用类型安全的接口调用</li>
+            <li><i class="fas fa-plug"></i> <span class="highlight">通用消息通道</span> - onMessage方法处理自定义消息</li>
+        </ul>
+    </div>
+
+    <!-- H5调试页面部分 -->
+    <div class="card hidden" id="h5-section">
+        <h2><i class="fas fa-file-code"></i> H5调试页面代码</h2>
+        <p>以下是用于调试的H5页面代码，可直接在WebView中加载：</p>
+
+        <div class="code-block">
+            <code>&lt;!DOCTYPE html>
+                &lt;html>
+                &lt;head>
+                &lt;meta charset="utf-8">
+                &lt;title>JSBridge调试页&lt;/title>
+                &lt;style>
+                /* 样式代码与当前页面类似 */
+                &lt;/style>
+                &lt;/head>
+                &lt;body>
+                &lt;div class="container">
+                &lt;h1>JSBridge调试页面&lt;/h1>
+
+                &lt;div class="controls">
+                &lt;button onclick="callJSBridge('showToast')">显示Toast&lt;/button>
+                &lt;button onclick="callJSBridge('showDialog')">显示对话框&lt;/button>
+                &lt;button onclick="callJSBridge('getDeviceInfo')">获取设备信息&lt;/button>
+                &lt;button onclick="callJSBridge('goBack')">返回上一页&lt;/button>
+                &lt;/div>
+
+                &lt;div class="result-area">
+                &lt;h3>调试结果：&lt;/h3>
+                &lt;div id="result">&lt;/div>
+                &lt;/div>
+
+                &lt;script>
+                // 调用JSBridge方法
+                function callJSBridge(method) {
+                let result;
+                switch(method) {
+                case 'showToast':
+                result = JSBridge.callHandler('showToast', 'Hello HarmonyOS!');
+                break;
+                case 'showDialog':
+                result = JSBridge.callHandler('showDialog', '提示', '操作成功');
+                break;
+                case 'getDeviceInfo':
+                result = JSBridge.callHandler('getDeviceInfo');
+                break;
+                case 'goBack':
+                result = JSBridge.callHandler('goBack');
+                break;
+                }
+                document.getElementById('result').innerText = result;
+                }
+
+                // 接收来自ArkTS的消息
+                function receiveFromNative(message) {
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `&lt;div class="log-entry success">收到ArkTS消息: ${message}&lt;/div>` + resultDiv.innerHTML;
+                }
+
+                // 初始化
+                window.addEventListener('load', () => {
+                document.getElementById('result').innerHTML =
+                '&lt;div class="log-entry info">H5页面已加载完成，可以开始调试&lt;/div>';
+                });
+                &lt;/script>
+                &lt;/div>
+                &lt;/body>
+                &lt;/html></code>
+        </div>
+    </div>
+
+    <!-- 交互演示部分 -->
+    <div class="card" id="demo-section">
+        <h2><i class="fas fa-laptop-code"></i> 交互演示</h2>
+        <p>在此模拟ArkTS与WebView的交互过程：</p>
+
+        <div class="content">
+            <div class="card">
+                <h3><i class="fas fa-globe"></i> H5调用ArkTS</h3>
+
+                <div class="input-group">
+                    <label for="jsMethod">选择方法：</label>
+                    <select id="jsMethod">
+                        <option value="showToast">showToast</option>
+                        <option value="showDialog">showDialog</option>
+                        <option value="getDeviceInfo">getDeviceInfo</option>
+                        <option value="goBack">goBack</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="param1">参数1：</label>
+                    <input type="text" id="param1" placeholder="输入参数值">
+                </div>
+
+                <div class="input-group">
+                    <label for="param2">参数2：</label>
+                    <input type="text" id="param2" placeholder="输入参数值">
+                </div>
+
+                <button onclick="callJSBridge()"><i class="fas fa-bolt"></i> 调用JS接口</button>
+                <button class="btn-secondary" onclick="sendToNative()"><i class="fas fa-comment-dots"></i> 发送消息</button>
+            </div>
+        </div>
+
+        <div class="result-area">
+            <h3>ArkTS响应结果：</h3>
+            <div class="logs" id="nativeResponse">
+                <div class="log-entry info">等待操作...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>鸿蒙API12+ | ArkTS与WebView交互示例 | 设计：可扩展JS接口架构</p>
+    </div>
+</div>
+
+<script>
+    // 调用JS接口
+    function callJSBridge() {
+        const method = document.getElementById('jsMethod').value;
+        const param1 = document.getElementById('param1').value;
+        const param2 = document.getElementById('param2').value;
+
+        let result;
+        switch (method) {
+            case 'showToast':
+                result = JSBridgeName.showToast(param1 || 'this is a toast');
+                break;
+            case 'showDialog':
+                result = JSBridgeName.showDialog(param1 || '提示', param2 || '这是一个对话框示例'
+                );
+                break;
+            case 'getDeviceInfo':
+                result = JSBridgeName.getDeviceInfo();
+                break;
+            case 'goBack':
+                result = JSBridgeName.goBack();
+                break;
+            default:
+                result = '未知方法';
+        }
+
+        const resultDiv = document.getElementById('nativeResponse');
+        resultDiv.innerHTML = `收到ArkTS消息: ${result}`;
+    }
+
+    // 发送消息到ArkTS
+    function sendToNative() {
+        const message = {
+            type: 'customMessage',
+            timestamp: new Date().toISOString(),
+            data: {
+                param1: document.getElementById('param1').value || '默认值',
+                param2: document.getElementById('param2').value || '默认值'
+            }
+        };
+
+        try {
+            const result = JSBridge.onMessage(JSON.stringify(message));
+            addLog(`消息发送成功: ${JSON.stringify(message)}`, 'info', 'nativeResponse');
+            addLog(`ArkTS响应: ${result}`, 'info', 'nativeResponse');
+        } catch (e) {
+            addLog(`消息发送失败: ${e.message}`, 'error', 'nativeResponse');
+        }
+    }
+
+    // 发送消息到H5
+    function sendToH5() {
+        const message = document.getElementById('nativeMessage').value;
+        try {
+            const jsonMsg = JSON.parse(message);
+            addLog(`消息发送到H5: ${message}`, 'info', 'h5Response');
+            // 模拟H5响应
+            setTimeout(() => {
+                addLog(`H5响应: 消息已处理`, 'success', 'h5Response');
+            }, 800);
+        } catch (e) {
+            addLog(`消息格式错误: ${e.message}`, 'error', 'h5Response');
+        }
+    }
+
+    // 标签切换功能
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            // 更新标签状态
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // 显示对应内容
+            document.getElementById('arkts-section').classList.add('hidden');
+            document.getElementById('h5-section').classList.add('hidden');
+            document.getElementById('demo-section').classList.add('hidden');
+
+            if (tab.dataset.tab === 'arkts') {
+                document.getElementById('arkts-section').classList.remove('hidden');
+            } else if (tab.dataset.tab === 'h5') {
+                document.getElementById('h5-section').classList.remove('hidden');
+            } else {
+                document.getElementById('demo-section').classList.remove('hidden');
+            }
+        });
+    });
+
+    // 初始化日志
+    addLog('H5页面已加载，可以开始调试JS接口', 'info', 'nativeResponse');
+    addLog('模拟JSBridge对象已创建', 'success', 'nativeResponse');
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "JsBridgeDemo"
+    },
+    {
+      "name": "internet_reason",
+      "value": "webview"
+    }
+  ]
+}
