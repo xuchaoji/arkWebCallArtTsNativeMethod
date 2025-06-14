@@ -15,11 +15,6 @@ struct Index {
   controller: webview.WebviewController = new webview.WebviewController();
   jsBridge: JSBridge = new JSBridge();
 
-  aboutToAppear() {
-    // 添加JSBridge到WebView
-  }
-
-
   build() {
     Column() {
       // WebView组件
@@ -27,13 +22,16 @@ struct Index {
         src: $rawfile('jsPage.html'),
         controller: this.controller
       })
-        .onPageEnd(e => {
-          console.log(TAG, '页面加载完成');
+        .onControllerAttached(() => {
           this.controller.registerJavaScriptProxy(
             this.jsBridge,
-            "JSBridgeName", // H5页面调用时使用
+            "JSBridgeName", // H5页面调用时使用 具体见：jsPage.html中的callJSBridge()
             ['onMessage', 'showToast', 'showDialog', 'getDeviceInfo', 'goBack'] // 支持的方法列表
           );
+          this.controller.refresh();
+        })
+        .onPageEnd(e => {
+          console.log(TAG, '页面加载完成');
         })
         .onAttach(() => {
           setTimeout(() => {
