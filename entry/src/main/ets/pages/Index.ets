@@ -10,15 +10,13 @@ interface GeneratedObjectLiteralInterface_1 {
 const TAG: string = 'MyDemoIndex'
 
 @Entry
-@Component
+@ComponentV2
 struct Index {
-  @State message: string = 'Hello World';
   controller: webview.WebviewController = new webview.WebviewController();
   jsBridge: JSBridge = new JSBridge();
 
   aboutToAppear() {
     // 添加JSBridge到WebView
-
   }
 
 
@@ -33,8 +31,8 @@ struct Index {
           console.log(TAG, '页面加载完成');
           this.controller.registerJavaScriptProxy(
             this.jsBridge,
-            "JSBridgeName",
-            ['onMessage', 'showToast', 'showDialog', 'getDeviceInfo', 'goBack']
+            "JSBridgeName", // H5页面调用时使用
+            ['onMessage', 'showToast', 'showDialog', 'getDeviceInfo', 'goBack'] // 支持的方法列表
           );
         })
         .onAttach(() => {
